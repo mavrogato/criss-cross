@@ -1,17 +1,16 @@
-#include <gtest/gtest.h>
+
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/benchmark/catch_benchmark.hpp>
 
 #include <aux/tuple-support.hpp>
 
 #include <array>
 #include <spanstream>
+#include <string_view>
+#include <tuple>
 
-class tuple_support_test : public testing::Test {
-protected:
-    void SetUp() override { }
-    void TearDown() override {}
-};
 
-TEST_F(tuple_support_test, lisp_like_format) {
+TEST_CASE("stream inserter", "[tuple_support]") {
     {
         using aux::operator<<;
 
@@ -19,6 +18,6 @@ TEST_F(tuple_support_test, lisp_like_format) {
         auto buf = std::array<char, 32>{};
         auto out = std::spanstream{buf};
         out << t;
-        ASSERT_STREQ(out.span().data(), "(3.14 c 42)");
+        REQUIRE(std::string_view(out.span().data()) == "(3.14 c 42)");
     }
 }
