@@ -1,6 +1,7 @@
 
 cmake_minimum_required(VERSION 3.28)
 
+include(FetchContent)
 set(CMAKE_EXPORT_COMILE_COMMANDS ON)
 
 include_directories(
@@ -10,12 +11,20 @@ include_directories(
 # C
 set(CMAKE_C_COMPILER clang)
 set(CMAKE_C_STANDARD 17)
-set(CMAKE_C_FLAGS "-Wall -Wextra -save-temps")
+set(CMAKE_C_FLAGS "-g -Wall -Wextra -save-temps")
 
 # C++
 set(CMAKE_CXX_COMPILER clang++)
 set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -fsycl -fsycl-targets=nvptx64-nvidia-cuda -save-temps")
+set(CMAKE_CXX_FLAGS "-g -Wall -Wextra -fsycl -fsycl-targets=nvptx64-nvidia-cuda -save-temps")
+
+# wayland client
+FetchContent_Populate(wayland
+  GIT_REPOSITORY https://gitlab.freedesktop.org/wayland/wayland
+  GIT_TAG 1.24)
+add_custom_target(wayland-client-private
+  COMMAND cd wayland-src && meson ../wayland-build/ --buildtype=debug --prefix=${CMAKE_CURRENT_BINARY_DIR} # debug only
+  COMMAND ninja -C ./wayland-build/ install)
 
 # wayland protocols
 include(FeatureSummary)
@@ -60,13 +69,18 @@ add_executable(criss-cross
   ${CMAKE_CURRENT_BINARY_DIR}/zwp-tablet-v2-private.c
   ${CMAKE_CURRENT_BINARY_DIR}/zwp-linux-dmabuf-v1-private.c)
 
+target_link_directories(criss-cross
+  PRIVATE
+  ${CMAKE_CURRENT_BINARY_DIR}/lib/x86_64-linux-gnu)
 target_link_libraries(criss-cross
+  PRIVATE
   wayland-client)
+add_dependencies(criss-cross
+  wayland-client-private)
 
 # gtest
 file(GLOB_RECURSE TST *-test.cc)
 list(FILTER TST EXCLUDE REGEX "build/.*")
-include(FetchContent)
 FetchContent_Declare(
   googletest
   GIT_REPOSITORY https://github.com/google/googletest.git
