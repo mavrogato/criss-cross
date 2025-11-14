@@ -1,15 +1,9 @@
-#include <gtest/gtest.h>
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/benchmark/catch_benchmark.hpp>
 
 #include <aux/io-support.hpp>
 
-
-class io_support_test : public testing::Test {
-protected:
-    void SetUp() override { }
-    void TearDown() override {}
-};
-
-TEST_F(io_support_test, unique_fd) {
+TEST_CASE("io_support_test", "[unique_fd]") {
     {
         // aux::unique_fd fd{open("test.txt", O_CREAT)};
         // if (!fd) {
