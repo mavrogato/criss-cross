@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.28)
 
 include(FetchContent)
-set(CMAKE_EXPORT_COMILE_COMMANDS ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
@@ -78,21 +78,24 @@ target_link_libraries(criss-cross
 add_dependencies(criss-cross
   wayland-client-private)
 
-# gtest
+# Check2 test framework
+FetchContent_Declare(
+  catch2
+  GIT_REPOSITORY https://github.com/catchorg/Catch2
+  GIT_TAG v3.11.0)
+FetchContent_MakeAvailable(catch2)
 file(GLOB_RECURSE TST *-test.cc)
 list(FILTER TST EXCLUDE REGEX "build/.*")
-FetchContent_Declare(
-  googletest
-  GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG v1.17.0
-)
-FetchContent_MakeAvailable(googletest)
 enable_testing()
 add_executable(criss-cross-test ${TST})
-target_link_libraries(criss-cross-test PRIVATE gtest_main)
-include(GoogleTest)
-gtest_discover_tests(criss-cross-test)
+target_link_libraries(criss-cross-test PRIVATE Catch2::Catch2WithMain)
+
+add_test(NAME run_criss_cross_tests COMMAND criss-cross-test)
+
+#add_custom_target(investigation
+#  DEPENDS criss-cross-test
+#  COMMAND ctest --verbose)
 
 add_custom_target(run
   DEPENDS criss-cross criss-cross-test
-  COMMAND ctest && WAYLAND_DEBUG=1 ./criss-cross)
+  COMMAND ctest --verbose && WAYLAND_DEBUG=1 ./criss-cross)
